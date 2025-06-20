@@ -3,6 +3,3 @@ FROM n8nio/n8n
 
 # Copia o workflow.json para dentro do container
 COPY workflow.json /workflows/workflow.json
-
-# Executa o n8n normalmente
-CMD ["n8n"]
