@@ -1,0 +1,270 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "login",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Start (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        140
+      ],
+      "id": "b86124ff-f431-4450-a578-55f02942eafa",
+      "webhookId": "819622a4-77c7-460a-982f-0e9fd26b6f72"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://cxfvvxjkmoyfkudiqcuh.supabase.co/auth/v1/token?grant_type=password",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"grant_type\": \"password\",\n  \"email\": \"={{$json.body.email}}\",\n  \"password\": \"={{$json.body.password}}\"\n}\n",
+        "headerParametersJson": "={\n  \"apikey\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4ZnZ2eGprbW95Zmt1ZGlxY3VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDI2NDgsImV4cCI6MjA2NjAxODY0OH0.jDO2NXfk51OhBfSFDQqf1a3MclyMoDVZ3z6YsPkCGdI\",\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json\"\n}"
+      },
+      "name": "Supabase Auth",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -360,
+        140
+      ],
+      "id": "c9fd8bf9-c29d-43c7-b659-a9bc4fd1e4c5"
+    },
+    {
+      "parameters": {
+        "functionCode": "if (!$json[\"access_token\"]) {\n  throw new Error('Falha na autenticação: credenciais inválidas');\n}\nreturn [{ json: { user_id: $json[\"user\"]?.id, access_token: $json[\"access_token\"] } }];"
+      },
+      "name": "Check Auth Result",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        140
+      ],
+      "id": "78c40097-5f18-449d-864b-8d9df33b837f"
+    },
+    {
+      "parameters": {
+        "url": "https://cxfvvxjkmoyfkudiqcuh.supabase.co/rest/v1/profiles",
+        "jsonParameters": true,
+        "options": {},
+        "headerParametersJson": "={\n  \"apikey\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4ZnZ2eGprbW95Zmt1ZGlxY3VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDI2NDgsImV4cCI6MjA2NjAxODY0OH0.jDO2NXfk51OhBfSFDQqf1a3MclyMoDVZ3z6YsPkCGdI\", \n  \"Authorization\": \"Bearer {{$json.access_token}}\",\n  \"Accept\": \"application/json\"\n}\n"
+      },
+      "name": "Get Profile Role",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        100,
+        140
+      ],
+      "id": "a0f92fef-b72e-42a4-84a0-1d9a57daf511"
+    },
+    {
+      "parameters": {
+        "functionCode": "const role = $json[0]?.role;\nif (!role) {\n  throw new Error('Perfil não encontrado ou inválido');\n}\nif (role === 'admin') {\n  return [{ json: { redirect: '/admin' } }];\n} else if (role === 'cliente') {\n  return [{ json: { redirect: '/cliente' } }];\n} else {\n  throw new Error('Role desconhecido');\n}"
+      },
+      "name": "Decide Redirect",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        340,
+        140
+      ],
+      "id": "6e15b489-5da7-4a56-b455-c71ffdbe6fb5"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Redirect Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        600,
+        140
+      ],
+      "id": "be97a3cc-6218-4cbd-8dda-bedba2f818eb"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "registro",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -440,
+        400
+      ],
+      "id": "1120983c-96a5-49e2-975a-fb603c2073be",
+      "name": "Webhook",
+      "webhookId": "2668e32f-41c4-4cd5-8d42-1182319a0af9"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Usuário registrado com sucesso",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        220,
+        400
+      ],
+      "id": "1d0e53ba-1080-41ae-aafa-35dcd03a6242",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cxfvvxjkmoyfkudiqcuh.supabase.co/auth/v1/signup",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"apikey\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4ZnZ2eGprbW95Zmt1ZGlxY3VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDI2NDgsImV4cCI6MjA2NjAxODY0OH0.jDO2NXfk51OhBfSFDQqf1a3MclyMoDVZ3z6YsPkCGdI\",\n  \"Content-Type\": \"application/json\"\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"email\": \"={{$json.body.email}}\",\n  \"password\": \"={{$json.body.password}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -220,
+        400
+      ],
+      "id": "1f58f58e-359b-48df-b405-43d7fa43f38e",
+      "name": "Signup"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cxfvvxjkmoyfkudiqcuh.supabase.co/rest/v1/profiles",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"apikey\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4ZnZ2eGprbW95Zmt1ZGlxY3VoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDQ0MjY0OCwiZXhwIjoyMDY2MDE4NjQ4fQ.uloOK3TNLkJ2jXlrqS7KuDC7zLNXeCVPf5qUMdAQQI4\",\n  \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4ZnZ2eGprbW95Zmt1ZGlxY3VoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDQ0MjY0OCwiZXhwIjoyMDY2MDE4NjQ4fQ.uloOK3TNLkJ2jXlrqS7KuDC7zLNXeCVPf5qUMdAQQI4\",\n  \"Content-Type\": \"application/json\",\n  \"Prefer\": \"return=representation\"\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"user_id\": \"{{$json.user.identities[0].user_id}}\",\n  \"role\": \"cliente\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        400
+      ],
+      "id": "37b72537-d7a9-45c9-93f0-0d537d2928be",
+      "name": "Create Profile"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start (Webhook)": {
+      "main": [
+        [
+          {
+            "node": "Supabase Auth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Auth": {
+      "main": [
+        [
+          {
+            "node": "Check Auth Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Auth Result": {
+      "main": [
+        [
+          {
+            "node": "Get Profile Role",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Profile Role": {
+      "main": [
+        [
+          {
+            "node": "Decide Redirect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide Redirect": {
+      "main": [
+        [
+          {
+            "node": "Redirect Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Signup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signup": {
+      "main": [
+        [
+          {
+            "node": "Create Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Profile": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f285ce57-9e91-466e-aaf4-fd9db2b9fa54",
+  "meta": {
+    "instanceId": "702043740d4e7ca290d0afbae4327e819088a32e33a77f47e21980fac11a44a9"
+  },
+  "id": "Dmz19PEZBoyDGyAu",
+  "tags": []
+}
